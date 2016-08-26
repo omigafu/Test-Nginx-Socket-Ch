@@ -1,5 +1,5 @@
 # Test-Nginx-Socket---Chinese
-Test::Nginx::Socket 文档中文翻译
+Test-Nginx-Socket 文档中文翻译
 
 
 link:https://github.com/openresty/test-nginx/[ Test::Nginx ] 是 link:https://github.com/agentzh/[ @agentzh ] 章亦春 写的一个测试套件，这个测试套件是基于 link:https://metacpan.org/pod/distribution/Test-Base/lib/Test/Base.pod/[ Test::Base ] 开发。
