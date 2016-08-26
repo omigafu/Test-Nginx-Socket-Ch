@@ -3,7 +3,7 @@
 这个模块提供了一个测试套件基于非阻塞 IO::Socket 来自动化测试Nginx C 模块开发
 这个类继承自Test::Base, 因此带来了所有声明的东西到了 Nginx C 模块测试用例
 
-你需要终结所有Nginx进程在运行套件之间，如果你已经改变了 Nginx server binary. 
+如果你已经改变了 Nginx server binary，你需要在运行套件之前终结所有Nginx进程. 
 ```
 killall nginx
 PATH=/path/to/your/nginx-with-memc-module:$PATH prove -r t
