@@ -2,7 +2,7 @@
 Test::Nginx::Socket 文档中文翻译
 
 
-Test::Nginx是 link:https://github.com/agentzh/[ @agentzh ] 章亦春 写的一个测试套件，这个测试套件是基于 link:https://metacpan.org/pod/distribution/Test-Base/lib/Test/Base.pod/[ Test::Base ] 开发。
+link:https://github.com/openresty/test-nginx/[ Test::Nginx ] 是 link:https://github.com/agentzh/[ @agentzh ] 章亦春 写的一个测试套件，这个测试套件是基于 link:https://metacpan.org/pod/distribution/Test-Base/lib/Test/Base.pod/[ Test::Base ] 开发。
 这个测试框架有两个相关教程，其中一个是一本英文版的 gitbook 
 https://openresty.gitbooks.io/programming-openresty/content/ 
 当然也有其对应的中文翻译 
