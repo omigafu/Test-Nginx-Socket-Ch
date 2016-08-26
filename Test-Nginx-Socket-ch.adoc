@@ -1,0 +1,110 @@
+# 描述
+这个模块提供了一个测试套件基于非阻塞 IO::Socket 来自动化测试Nginx C 模块开发
+这个类继承自Test::Base, 因此带来了所有声明的东西到了 Nginx C 模块测试用例
+你需要终结所有Nginx进程在运行套件之间，如果你已经改变了 Nginx server binary. 
+```
+killall nginx
+PATH=/path/to/your/nginx-with-memc-module:$PATH prove -r t
+```
+这个模块将会创建一个临时的 server root 在当前工作目录的 t/servroot/ 下，然后开启 PATH 环境变量下的 nginx 可执行程序。
+当出现错误的时候，你有经常查看 t/servroot/logs/error.log 这个文件：）
+
+# 用户指南
+你能找到一个在这个测试框架下全面的用户指南在我的即将出版的书 “Programming OpenResty” 
+https://openresty.gitbooks.io/programming-openresty/content/testing/index.html
+特性继承自 Test::Base
+Test::Base 里的所有特性都被继承由于它是这个模块的祖先类
+我们会高亮一些继承的特在这里为了那些不熟悉Test::Base 的人
+
+# 元段
+
+### --- ONLY
+只运行这附近的测试块，你需要记住移除掉 --- ONLY 在提交你的变化之前。不用担心，这个测试框架会在控制台上提醒你，当你留下 --- ONLY 在一些测试文件中的时候。
+
+对于开发工作流这也是非常直观，不需要指定一个特定的测试名称在命令行上，只要在编辑器上找到测试块，插入 --- ONLY ，然后立即运行当前的测试文件，如果是vim 用户，可以使用 :!prove % ，叹号表示要执行指令， %表示 vim 当前编辑的 buffer  
+这无疑是最有用和最频繁使用的特性
+
+### --- SKIP
+Skips 会无条件地跳过测试块，你能使用 --- skip_nginx and --- skip_nginx2 区有条件地跳过测试根据当前 NGINX 服务器版本
+
+# 过滤器
+我们能使用过滤器区处理测试块的值，这能更加容易指定特殊值
+例如，我们能砍掉当前段中新的一行的最后一个字符，通过指定 chomp 过滤器，像这样
+### --- response_body chomp
+Hello world!
+没有 chomp 过滤器，这个 response_body 段的值会包括尾部新的一行 (“\n”)
+我们下面列出一些公共的过滤器
+### chomp
+如果这是一个新行移除最后一个字符
+### chop
+无论是什么都移除最后一个字符
+### eval
+把这些 section 值作为一个 Perl code snippet，使用 Perl code snippet 的返回值
+这是非常有用的对于指定在段里面不是打印的字符，直接打印“\n”
+```
+--- response_body eval
+"I don't know what \0 is.\n"
+```
+
+# Exported Perl 函数
+下面这些 Perl 函数被默认导出
+
+### run_tests
+这是测试框架的主要入口，在 __DATA__ 前面调用Perl函数使所有的测试运行，其他配置 Perl函数必须在 run_tests 函数之前调用
+
+### no_shuffle
+默认地，这个测试框架总是自动地打乱测试块的顺序，如果在 run_tests 之前调用它no_shuffle，那么将会禁止打乱顺序
+
+### no_long_string
+默认地，失败的字符串匹配测试将会使用 Test::LongString 模块产生一个错误信息，在run_tests 之前调用这个函数将会关闭它
+
+### no_diff
+当no_long_string 函数被调用的时候，Text::Diff 模块将会被用来产生一个diff 给错误的字符串相等测试。在 run_test 调用 no_diff 函数会关闭这个diff输出格式并且产生一行 "got" 文本和 "expected" 文本。
+
+### worker_connections
+在run_tests 之前调用这个函数去设置Nginx's worker_connections 的值，例如
+worker_connections(1024);
+run_tests();
+默认64
+
+### repeat_each
+在 run_test 之前调用这个函数带上一个整形的参数去告诉测试框架去运行指定的重复的请求次数给每一个测试块，当你调用时候没有参数，返回当前设置的值，默认1
+
+### env_to_nginx
+指定另外的系统环境变量到 nginx 服务器
+例如
+```
+env_to_nginx("foo", "bar=123", "baz=hello world");
+run_tests();
+```
+将会下面的行被插入到由测试框架产生的 nginx.conf 文件
+```
+env foo;
+env bar=123;
+env 'baz=hello world';
+```
+
+下面2行也是一个直接设置值到环境中的例子。你也能直接设置一个值在Perl 上，在 env_to_nginx 之前调用，例如
+```
+$ENV{baz} = 'hello world';
+env_to_nginx("baz");
+```
+如果你也想通过确定的环境到指定的测试用例上，你也可以直接使用 --- main_config 段，例如
+```
+--- main_config
+env foo;
+env bar=123;
+```
+你可以查阅nginx的官方文档关于它的 env 指令
+http://nginx.org/r/env
+默认地，只有下面的环境变量被通过:
+```
+MOCKEAGAIN_VERBOSE
+MOCKEAGAIN
+MOCKEAGAIN_WRITE_TIMEOUT_PATTERN
+LD_PRELOAD
+LD_LIBRARY_PATH
+DYLD_INSERT_LIBRARIES
+DYLD_FORCE_FLAT_NAMESPACE
+ASAN_OPTIONS
+```
