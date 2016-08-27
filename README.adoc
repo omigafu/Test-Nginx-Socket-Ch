@@ -1,4 +1,4 @@
-# Test-Nginx-Socket---Chinese
+# Test-Nginx-Socket-Chinese
 Test-Nginx-Socket 文档中文翻译
 
 
