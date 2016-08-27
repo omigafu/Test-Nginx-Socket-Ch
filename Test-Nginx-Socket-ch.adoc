@@ -3,7 +3,7 @@
 这个模块提供了一个测试套件基于非阻塞 IO::Socket 来自动化测试Nginx C 模块开发
 这个类继承自Test::Base, 因此带来了所有声明的东西到了 Nginx C 模块测试用例
 
-如果你已经改变了 Nginx server binary，你需要在运行套件之前终结所有Nginx进程. 
+如果你已经改变了 Nginx server binary，你需要在运行套件之前终结所有Nginx进程.
 ```
 killall nginx
 PATH=/path/to/your/nginx-with-memc-module:$PATH prove -r t
@@ -12,7 +12,7 @@ PATH=/path/to/your/nginx-with-memc-module:$PATH prove -r t
 当出现错误的时候，你有经常查看 t/servroot/logs/error.log 这个文件：）
 
 # 用户指南
-你能找到一个在这个测试框架下全面的用户指南在我的即将出版的书 “Programming OpenResty” 
+你能找到一个在这个测试框架下全面的用户指南在我的即将出版的书 “Programming OpenResty”
 https://openresty.gitbooks.io/programming-openresty/content/testing/index.html
 特性继承自 Test::Base
 Test::Base 里的所有特性都被继承由于它是这个模块的祖先类
@@ -23,7 +23,7 @@ Test::Base 里的所有特性都被继承由于它是这个模块的祖先类
 ### --- ONLY
 只运行这附近的测试块，你需要记住移除掉 --- ONLY 在提交你的变化之前。不用担心，这个测试框架会在控制台上提醒你，当你留下 --- ONLY 在一些测试文件中的时候。
 
-对于开发工作流这也是非常直观，不需要指定一个特定的测试名称在命令行上，只要在编辑器上找到测试块，插入 --- ONLY ，然后立即运行当前的测试文件，如果是vim 用户，可以使用 :!prove % ，叹号表示要执行指令， %表示 vim 当前编辑的 buffer  
+对于开发工作流这也是非常直观，不需要指定一个特定的测试名称在命令行上，只要在编辑器上找到测试块，插入 --- ONLY ，然后立即运行当前的测试文件，如果是vim 用户，可以使用 :!prove % ，叹号表示要执行指令， %表示 vim 当前编辑的 buffer
 这无疑是最有用和最频繁使用的特性
 
 ### --- SKIP
@@ -110,3 +110,12 @@ DYLD_INSERT_LIBRARIES
 DYLD_FORCE_FLAT_NAMESPACE
 ASAN_OPTIONS
 ```
+
+### workers
+在 run_tests() 之前调用这个函数来配置 Nginx 的 worker_processes 指令的值，例如：
+```
+workers(2);
+```
+默认是1
+
+### master_on
