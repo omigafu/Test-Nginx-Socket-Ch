@@ -9,8 +9,8 @@ https://openresty.gitbooks.io/programming-openresty/content/
 https://github.com/iresty/programming-openresty-zh 
 这是由 link:https://github.com/iresty/[ iresty ] 团队完成的部分翻译
 
-另外还有一个比较详细教程链接地址 https://metacpan.org/pod/Test::Nginx::Socket 
-这个教程比较详细，可以看完前面的教程后再看这个，这个文档还有没有对应的翻译版本，对很多人入门的同学来说可能是一件比较苦恼的事情，因此写了一个初步的翻译提供新手学习
+另外还有一个比较详细文档，链接地址 https://metacpan.org/pod/Test::Nginx::Socket 
+这个文档比较详细，可以看完前面的教程后再看这个，这个文档还有没有对应的翻译版本，对很多人入门的同学来说可能是一件比较苦恼的事情，因此写了一个初步的翻译提供新手学习
 
 随时欢迎大家 PR 内容。
 
