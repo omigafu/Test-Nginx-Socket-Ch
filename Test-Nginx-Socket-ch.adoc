@@ -131,6 +131,186 @@ workers(2);
 - 用 `--- error_log` 和 `--- no_error_log`  检查积累错误日志通过被 repeat_each 所控制的重复的请求
 
 #### no_root_location
-默认地，Nginx 配置文件会被产生通过测试框架自动地生成一个 `location /`。在调用 run_tests() 之前调用这个函数会禁止这个行为
+- 默认地，Nginx 配置文件会被产生通过测试框架自动地生成一个 `location /`。在调用 run_tests() 之前调用这个函数会禁止这个行为
 这样的话测试块能拥有他们自己的 root locations.
 
+#### bail_out
+- 抛出指定的信息后退出整个 test session (不仅仅是当前的测试文件)
+- 这个函数也能做所有必要的清理工作，因此总是使用这个函数而不是调用 ```Test::More::BAIL_OUT()``` 指令
+- 例如
+```
+bail_out("something bad happened!");
+```
+
+#### add_cleanup_handler
+- 注册客户清理句柄给当前的 perl/prove 进程，通过指定一个 Perl 子函数对象作为一个参数
+- 例如：
+```
+add_cleanup_handler(sub {
+    kill INT => $my_own_child_pid;
+    $my_own_socket->close()
+});
+```
+
+#### add_block_preprocessor
+- 增加一个客户 Perl 预处理器给每个测试块通过指定一个 Perl 子函数对象作为一个参数
+- 这个进程子函数总是立即运行在处理测试块之前
+- 这个机制能被用来增加客户字段或者修改存在的一个
+- 例如
+```
+add_block_preprocessor(sub {
+    my $block = shift;
+ 
+    # use "--- req_headers" for "--- more_Headers":
+    $block->set_value("more_headers", $block->req_headers);
+ 
+    # initialize external dependencies like memcached services here...
+});
+```
+
+#### add_response_body_check
+- 为测试相应体增加客户检查通过指定一个 Perl 子函数对象作为一个参数
+- 下面是一个做 HTML 标题检查的一个例子
+```
+add_response_body_check(sub {
+        my ($block, $body, $req_idx, $repeated_req_idx, $dry_run) = @_;
+ 
+        my $name = $block->name;
+        my $expected_title = $block->resp_title;
+ 
+        if ($expected_title && !ref $expected_title) {
+            $expected_title =~ s/^\s*|\s*$//gs;
+        }
+ 
+        if (defined $expected_title) {
+            SKIP: {
+                skip "$name - resp_title - tests skipped due to $dry_run", 1 if $dry_run;
+ 
+                my $title;
+                if ($body =~ m{<\s*title\s*>\s*(.*?)<\s*/\s*title\s*>}) {
+                    $title = $1;
+                    $title =~ s/\s*$//s;
+                }
+ 
+                is_str($title, $expected_title,
+                       "$name - resp_title (req $repeated_req_idx)" );
+            }
+        }
+    });
+```
+
+#### is_str
+- 执行智能的字符串比较子测试
+
+## Sections supported
+下面的 sections 将会被支持
+
+#### config
+这段的内容将会被包含在 产生的 config 文件里的 “server” 部分，这一部分是想要防止 “location” 指定来使能你想要测试的模块
+```
+location /echo {
+    echo_before_body hello;
+    echo world;
+}
+```
+- 有时候你不想要打扰复制10次相同的配置文件给10个你想要运行的模块。一种方法是只为在你的 `.t` 文件中第一个测试文件写配置字段.
+所有的子请求测试将会重用相同的 config。请注意着依赖于测试的顺序，所以你运行 `prove` 带有变量 EST_NGINX_NO_SHUFFLE=1
+- 请注意配置字段通过环境变量扩展来启动 TEST_NGINX。因此下面是一个完美的声明(提供 TEST_NGINX_HTML_DIR 是正确地设置)
+```
+location /main {
+    echo_subrequest POST /sub -f $TEST_NGINX_HTML_DIR/blah.txt;
+}
+```
+
+#### http_config
+这个段的内容将会被包含在产生的 config 文件中的 http 部分。这个位置是你想要放置你想要测试的 “upstream” 指令。例如
+
+```
+upstream database {
+    postgres_server     127.0.0.1:$TEST_NGINX_POSTGRESQL_PORT
+                        dbname=ngx_test user=ngx_test
+                        password=wrong_pass;
+}
+```
+这个部分通过环境变量扩展(variables have to start with TEST_NGINX)
+
+#### main_config
+- 这部分的内容将会被包含在 产生的 config 文件的 “main” 部分。这是很少被使用的，除了你要特使nginx内核。 所有在 `---main_config` 将会被自动产生放置在 http {} 块之前
+- 这个部分通过环境变量扩展(变量随着 TEST_NGINX 启动)
+
+#### post_main_config
+和 main_config 相似，但内容在 `http{}` 之后
+
+#### server_name
+指定一个客户服务器名字(通过 "server_name" nginx 配置指定)给当前的测试块。默认是“localhost”
+
+#### init
+运行 Perl 指定代码的一个片段作为 `--- init` section 的内容在运行测试块之前。注意着只会运行一次在 **所有** 的测试块的重复请求之前
+
+#### request
+这可能是一个最重要 section。它定义了一个你打算发送给 nginx server 的 request。它提供了一个强大的语法我们在一次处理一个例子
+在这个最基础的表格，这个 section 看起来像这样：
+```
+--- request
+GET
+```
+- 这将会用 GET 请求服务器的root(i.e./)，使用HTTP/1.1
+- 当然，你可能想要测试其他的东西，使用不同的 HTTP 版本
+```
+--- request
+GET /foo HTTP/1.0
+```
+请注意指定 HTTP/1.0 将不会从发送 Host Header 保护 Test::Nginx。事实上 Test::Nginx 总是发送2个headers: Host
+ 和 connection 
+ 你也能增加一个内容到你的测试
+ ```
+--- request
+POST /foo
+Hello world
+ ```
+- Test::Nginx 将会自动计算内容长度和为你增加响应头。
+- 这就是说，一旦你想 POST 真是的数据，你将会对使用 more_headers section 和使用 Test::Base filters 去url 编码你发送的内容很感兴趣。
+```
+--- more_headers
+Content-type: application/x-www-form-urlencoded
+--- request eval
+use URI::Escape;
+"POST /rrd/foo
+value=".uri_escape("N:12345")
+```
+有时候比一个测试比一个 request 更多，典型是你想要POST一些数据和确定数据用GET带到了一个 account，你能用使用这种方式
+```
+--- request eval
+["POST /users
+name=foo", "GET /users/foo"]
+```
+当你开发一个漂亮的nginx模块你会最终想使用 buffers and "weird" network conditions 来测试东西。这里就是你分割你的request到网络包的地方
+```
+--- request eval
+[["POST /users\nna", "me=foo"]]
+```
+这里 Test::Nginx 将会首先发送 request line，这个头部他会自动为你加入，然后会发送下一个包(here it's "me=foo")。当我们讨论包的时候，这不是真正准确的由于没有产生TCP/IP行为， Test::Nginx 能保证的是会造成两次 syswrite 调用。
+
+一个好的方法是在发送第二个包之前确保两个调用导致在2个包之间有延时(2s)
+```
+--- request eval
+[["POST /users\nna", {value => "me=foo", delay_before => 2}]]
+```
+
+当然了，所有都能被联合起来
+```
+--- request eval
+use URI::Escape;
+my $val="value=".uri_escape("N:12346");
+[["POST /rrd/foo
+".substr($val, 0, 6),
+{value => substr($val, 6, 5), delay_before=>5},
+substr($val, 11)],  "GET /rrd/foo"]
+```
+增加一个注释在 request 之前也被支持
+```
+--- request
+# this request contains the URI args
+# "foo" and "bar":
+GET /api?foo=1&bar=2
+```
