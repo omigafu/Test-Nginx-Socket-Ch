@@ -429,7 +429,7 @@ Hello, world
 ```
 
 #### skip_eval
-- 跳过自测试指定的数目，如果运行Perl代码片段的结果是true的话
+- 跳过自测试指定的数目（当前的测试块），如果运行Perl代码片段的结果是true的话
 - 这个section的格式是
 ```
 --- skip_eval
@@ -446,3 +446,54 @@ Hello, world
 ```
 
 #### skip_nginx
+- 跳过指定的子测试数目（当前的测试块）对于指定的nginx版本范围
+- 这个section的格式是
+```
+--- skip_nginx
+<subtest-count>: <op> <version>
+```
+<subtest-count> 这个值必须是一个正整数。<op> 可以是 >, >=, <, or <= ，<version> 也是一个有效的版本数字 像 1.0.2
+一个例子是
+```
+=== TEST 1: sample
+--- config
+    location /t { echo hello; }
+--- request
+    GET /t
+--- response_body
+--- skip_nginx
+2: < 0.8.54
+```
+- 在nginx版本老于0.8.54的时候跳过2个子测试
+- skip_nginx section 只允许你指定一个boolean表达式作为skip条件，如果你想要使用两个Boolean表达式，你应该使用skip_nginx2 section 来代替
+
+#### skip_nginx2
+- 这个section和skip_nginx很像，但是跳过的条件是由两个boolean 表达式组成，加上操作符 and or or
+- 这个section的格式是
+```
+--- skip_nginx2
+<subtest-count>: <op> <version> and|or <op> <version>
+```
+例如
+```
+=== TEST 1: sample
+--- config
+    location /t { echo hello; }
+--- request
+    GET /t
+--- response_body
+--- skip_nginx2
+2: < 0.8.53 and >= 0.8.41
+```
+
+#### todo
+格式
+```
+--- todo
+<subtest-count>: <reason>
+```
+<subtest-count> 这个必须是正整数
+<reason> is logged when you run tests with --directives.
+
+
+
