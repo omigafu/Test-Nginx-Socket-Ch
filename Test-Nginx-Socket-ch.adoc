@@ -314,3 +314,135 @@ substr($val, 11)],  "GET /rrd/foo"]
 # "foo" and "bar":
 GET /api?foo=1&bar=2
 ```
+
+#### request_eval
+
+使用这个字段是过时的，测试的时候必须要替换成 request 字段用 eval 过滤器
+```
+--- request_eval
+"POST /echo_body
+hello\x00\x01\x02
+world\x03\x04\xff"
+```
+应该被替换成
+```
+--- request eval
+"POST /echo_body
+hello\x00\x01\x02
+world\x03\x04\xff"
+```
+
+#### pipelined_requests
+- 指定pipelined requests使用 keep-alive connection to the server.
+- 这是ngx_lua 的测试套件
+```
+=== TEST 7: discard body
+--- config
+    location = /foo {
+        content_by_lua '
+            ngx.req.discard_body()
+            ngx.say("body: ", ngx.var.request_body)
+        ';
+    }
+    location = /bar {
+        content_by_lua '
+            ngx.req.read_body()
+            ngx.say("body: ", ngx.var.request_body)
+        ';
+    }
+--- pipelined_requests eval
+["POST /foo
+hello, world",
+"POST /bar
+hiya, world"]
+--- response_body eval
+["body: nil\n",
+"body: hiya, world\n"]
+```
+
+#### more_headers
+增加 section 的内容走位 headers 给请求来发送
+```
+--- more_headers
+X-Foo: blah
+```
+这将会增加 X-Foo: blah 到请求
+
+#### curl
+当这个字段被指定的时候，测试框架会尝试产生一个 curl 命令行给首个测试请求
+例如
+```
+--- request
+GET /foo/bar?baz=3
+ 
+--- more_headers
+X-Foo: 3
+User-Agent: openresty
+ 
+--- curl
+```
+当运行这个测试块的时候将会产生下面的行（到 stderr）
+```
+# curl -i -H 'X-Foo: 3' -A openresty 'http://127.0.0.1:1984/foo/bar?baz=3'
+```
+你需要记住去设置环境变量 TEST_NGINX_NO_CLEAN 1 从自动退出中去保护 nginx 和其他进程
+
+```
+response_body
+...
+...
+...
+
+这部分还没有翻译
+```
+
+
+#### user_files
+这个部分你会创建一个文件，在下面的测试中它会被复制到 nginx server 的 html 目录下。
+```
+--- user_files
+>>> blah.txt
+Hello, world
+```
+- 将会创建一个名字是 blah.txt 在 nginx server 的 html目录下，这个文件将会包含文本“Hello, world”
+- 多文件也被支持
+```
+--- user_files
+>>> foo.txt
+Hello, world!
+>>> bar.txt
+Hello, heaven!
+```
+最后一次修改的选项也被支持
+```
+--- user_files
+>>> blah.txt 199801171935.33
+Hello, world
+```
+也能指定Perl 数据结构给用户文件然后创建
+```
+--- user_files eval
+[
+    [ "foo.txt" => "Hello, world!", 199801171935.33 ],
+    [ "bar.txt" => "Hello, heaven!" ],
+]
+```
+
+#### skip_eval
+- 跳过自测试指定的数目，如果运行Perl代码片段的结果是true的话
+- 这个section的格式是
+```
+--- skip_eval
+<subtest-count>: <perl-code>
+```
+例如，跳过3个子测试，当目前操作系统不是Linux的时候
+```
+--- skip_eval
+3: $^O ne 'linux'
+```
+或者等价于
+```
+--- skip_eval: 3: $^O ne 'linux'
+```
+
+#### skip_nginx
