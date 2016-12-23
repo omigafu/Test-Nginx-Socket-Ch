@@ -11,7 +11,8 @@ PATH=/path/to/your/nginx-with-memc-module:$PATH prove -r t
 这个模块将会创建一个临时的 server root 在当前工作目录的 t/servroot/ 下，然后开启 PATH 环境变量下的 nginx 可执行程序.
 当出现错误的时候，你有经常查看 t/servroot/logs/error.log 这个文件：）
 
-## 用户指南你能找到一个在这个测试框架下全面的用户指南 [Programming OpenResty](https://openresty.gitbooks.io/programming-openresty/content/testing/index.html)
+## 用户指南
+你能找到一个在这个测试框架下全面的用户指南 [Programming OpenResty](https://openresty.gitbooks.io/programming-openresty/content/testing/index.html)
 特性继承自 Test::Base
 Test::Base 里的所有特性都被继承由于它是这个模块的祖先类
 我们会高亮一些继承的特在这里为了那些不熟悉Test::Base 的人
