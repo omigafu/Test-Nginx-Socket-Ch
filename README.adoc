@@ -1,7 +1,7 @@
 # Test-Nginx-Socket-ZH
 Test-Nginx-Socket 文档中文翻译
 
-[Test::Nginx](https://github.com/openresty/test-nginx/) 是 [@agentzh](https://github.com/agentzh/) 写的一个测试套件，这个测试套件是基于 [Test::Base](https://metacpan.org/pod/distribution/Test-Base/lib/Test/Base.pod/) 开发。
+[Test::Nginx](https://github.com/openresty/test-nginx) 是 [@agentzh](https://github.com/agentzh/) 写的一个测试套件，这个测试套件是基于 [Test::Base](https://metacpan.org/pod/distribution/Test-Base/lib/Test/Base.pod/) 开发。
 
 这个测试框架有两个相关教程，其中一个是一本英文版的 [gitbook](https://openresty.gitbooks.io/programming-openresty/content/)。
 
